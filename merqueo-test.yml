@@ -1,0 +1,80 @@
+---
+
+- name: TEST - MERQUEO
+  hosts: localhost
+  connection: local
+  become: true
+  tasks:
+
+    - name: "Instalando paquetes AppServer"
+      yum:
+        name: "{{ packages }} "
+      vars:
+        packages:
+        - wget
+        - tar
+        - httpd
+        - php
+        - php-common
+        - php-mysqlnd.x86_64
+        - php-gd
+        - php-xml
+        - php-mbstring
+        - php-xmlrpc
+
+    - name: "Descargando medios"
+      command: "{{ item }}"
+      with_items:
+        - "wget http://wordpress.org/latest.tar.gz -O /tmp/latest.tar.gz"
+        - tar -xzvf /tmp/latest.tar.gz -C /tmp/
+
+
+    - name: "Creando carpeta wordpress"
+      command: "cp -r /tmp/wordpress/. /var/www/html/"
+    
+
+    - name: "Creando carpeta uploads"
+      file:
+        path: /var/www/html/wp-content/uploads
+        state: directory
+
+
+    - name: "Configurando Permisos"
+      file:
+        path: /var/www/html
+        state: directory
+        owner: apache
+        group: apache
+        mode: '0755'
+        recurse: yes
+  
+    - name: "Iniciando servicio HTTPD"
+      service:
+        name: httpd
+        state: restarted
+        enabled: yes
+
+    - name: "Creando archivo wp-config.php"
+      copy:
+        src: /var/www/html/wp-config-sample.php
+        dest: /var/www/html/wp-config.php
+        force: yes
+
+    - name: "Configurando BD de wordpress"
+      lineinfile:
+        path: /var/www/html/wp-config.php
+        line: "{{ item }}"
+      with_items:
+        - "define('DB_NAME', 'wordpress');"
+        - "define('DB_USER', 'wordpress');"
+        - "define('DB_PASSWORD', 'm3rqu30123');"
+        - "define('DB_HOST', 'mytestdb.ccas36fxvghj.us-east-2.rds.amazonaws.com');"
+        - "define('AUTH_KEY','a`Toqu,pxQZk@o-[VvkE o F/eb-]S+X2&8?[Kt 1]/=kRK-ln2+xh`Pp1b%ZrQ7');"
+        - "define('SECURE_AUTH_KEY',  '(gQJ<|&U(n;2>2YPe (SjOxc{(K4DHq@d=ptCDyI/9#J.unLf-grt<$~x-vB]1$q');"
+        - "define('LOGGED_IN_KEY',    '#Hp{q5)cd1{jSunslT|@T^+}Q!xMpbE .<ZHd2b48kide5`e8=-]8uvhK*:!Y&.}');"
+        - "define('NONCE_KEY',        '|@&8Tpg&qpVVdOiU;!V^!N[%+@[Uedc+iN|$0(RDIiP5Ga1=W>_Y+19cqJjlHu i');"
+        - "define('AUTH_SALT',        ';-^?cR!U-2:.!.) |7N0q[wVphqsn1p3u!h%1@|1$uy^BQ9c*<lUjR1cNBS4u^?i');"
+        - "define('SECURE_AUTH_SALT', 's(L-22e]#bC?F4!=TQ[<RQWOF|;EXM>b`j)G=[&9{+.<16F <aIe.a c)K%kmi>*');"
+        - "define('LOGGED_IN_SALT',   'VDBcBO/E%V5{?2o1-l8zwLoP9jiO<Yxbr)ZyJzcw;5ktT`*@c]d~M;#]RU7EQ<o+');"
+        - "define('NONCE_SALT',       '<{6pkCqEk/-<Sz_[^jU|05yyGJvoP*P_V3M3h7F&a7xKseNLlC!nyjy-aC-R{+ET');"
+        
