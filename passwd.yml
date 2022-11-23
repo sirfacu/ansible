@@ -1,0 +1,26 @@
+---
+
+
+- hosts: func
+  become: true
+  vars:
+        users:
+        - username: "esp_middleware"
+          contrasena: "$1rF4Cu%*"
+		- username: "root"
+          contrasena: "R0otMW2022%*"
+
+		
+  tasks:
+  - name: "Validating user"
+    user:
+        name: "{{ item.username }}"
+        state: present
+        password: "{{ item.contrasena | password_hash('sha512') }}"
+    with_items: "{{ users }}"
+
+  - name: "Allow users of administrador group to sudo without a password"
+    lineinfile:
+        dest: "/etc/sudoers.d/middleware"
+        state: present
+        line: "%middleware ALL=(ALL) NOPASSWD: ALL"
